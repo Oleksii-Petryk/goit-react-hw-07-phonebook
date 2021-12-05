@@ -1,36 +1,48 @@
-import React from "react";
-import { connect } from "react-redux";
-import actions from "../../redux/redux-phonebook/phonebook-actions";
-import PropTypes from "prop-types";
-import styles from "./ContactList.module.css";
+import React, { useState, useEffect } from 'react';
+import { connect } from 'react-redux';
+import { useFetchContactsQuery } from '../../redux/redux-phonebook/phonebook-slice';
+import { ContactsListItem } from '../ContactsListItem/ContactsListItem';
+import PropTypes from 'prop-types';
+import styles from './ContactList.module.css';
+import LoadBox from '../Loader/Loader';
 
-function ContactList({ contacts, removeContact }) {
+function ContactList({ filter }) {
+  const { data, isFetching } = useFetchContactsQuery();
+  const [contacts, setContacts] = useState([]);
+  const [contactsList, setContastsList] = useState([]);
+
+  useEffect(() => {
+    setContacts(data);
+    setContastsList(data);
+  }, [data]);
+
+  useEffect(() => {
+    const filteredContactList = getFilteredContactList(contactsList, filter);
+    setContacts(filteredContactList);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [filter]);
+
+  const getFilteredContactList = (allContacts, filterValue) => {
+    return allContacts.filter(contact =>
+      contact.name
+        .toLocaleLowerCase()
+        .includes(filterValue.toLocaleLowerCase()),
+    );
+  };
+
   return (
-    <ul className={styles.list}>
-      {contacts.map(({ id, name, number }) => {
-        return (
-          <li className={styles.contactItem} key={id}>
-            <p className={styles.text}>{name}</p>
-            <p className={styles.number}>{number}</p>
-            <button
-              className={styles.button}
-              type="button"
-              onClick={() => removeContact(id)}
-            >
-              Delete
-            </button>
-          </li>
-        );
-      })}
-    </ul>
+    <>
+      {isFetching && <LoadBox />}
+
+      <ul className={styles.list}>
+        {contacts &&
+          contacts.map(contact => (
+            <ContactsListItem key={contact.id} {...contact} />
+          ))}
+      </ul>
+    </>
   );
 }
-
-const getFilteredContactList = (contacts, filter) => {
-  return contacts.filter((contact) =>
-    contact.name.toLocaleLowerCase().includes(filter.toLocaleLowerCase())
-  );
-};
 
 ContactList.propTypes = {
   id: PropTypes.string,
@@ -38,12 +50,8 @@ ContactList.propTypes = {
   number: PropTypes.number,
 };
 
-const mapStateToProps = ({ items, filter }) => ({
-  contacts: getFilteredContactList(items, filter),
+const mapStateToProps = ({ filter }) => ({
+  filter: filter,
 });
 
-const mapDispatchToProps = (dispatch) => ({
-  removeContact: (id) => dispatch(actions.removeContact(id)),
-});
-
-export default connect(mapStateToProps, mapDispatchToProps)(ContactList);
+export default connect(mapStateToProps)(ContactList);

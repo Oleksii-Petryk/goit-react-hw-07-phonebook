@@ -1,11 +1,11 @@
-import React from "react";
-import { connect } from "react-redux";
-import actions from "../../redux/redux-phonebook/phonebook-actions";
-import PropTypes from "prop-types";
-import styles from "./Filter.module.css";
+import React from 'react';
+import { connect } from 'react-redux';
+import { changeFilter } from '../../redux/redux-phonebook/phonebook-actions';
+import PropTypes from 'prop-types';
+import styles from './Filter.module.css';
 
 function Filter({ onChange }) {
-  const changeFilter = (e) => {
+  const changeFilter = e => {
     const filterValue = e.currentTarget.value;
     onChange(filterValue);
   };
@@ -32,8 +32,8 @@ Filter.propTypes = {
   onChange: PropTypes.func,
 };
 
-const mapDispatchToProps = (dispatch) => ({
-  onChange: (filterValue) => dispatch(actions.changeFilter(filterValue)),
+const mapDispatchToProps = dispatch => ({
+  onChange: filterValue => dispatch(changeFilter(filterValue)),
 });
 
 export default connect(null, mapDispatchToProps)(Filter);

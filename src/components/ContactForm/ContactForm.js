@@ -1,22 +1,37 @@
-import { connect } from "react-redux";
-import actions from "../../redux/redux-phonebook/phonebook-actions";
-import React, { useState } from "react";
-import PropTypes from "prop-types";
-import styles from "./ContactForm.module.css";
+import {
+  useFetchContactsQuery,
+  useCreateContactMutation,
+} from '../../redux/redux-phonebook/phonebook-slice';
+import React, { useState, useEffect } from 'react';
+import PropTypes from 'prop-types';
+import styles from './ContactForm.module.css';
+import { toast } from 'react-toastify';
+import LoadBox from '../Loader/Loader';
 
-function ContactForm({ contacts, onSubmit }) {
-  const [name, setName] = useState("");
-  const [number, setNumber] = useState("");
+function ContactForm() {
+  const [name, setName] = useState('');
+  const [number, setNumber] = useState('');
+  const [createContact, { isLoading }] = useCreateContactMutation();
+  const { data } = useFetchContactsQuery();
+  const [contacts, setContacts] = useState([]);
 
-  const handleChange = (e) => {
+  useEffect(() => {
+    setContacts(data);
+  }, [data]);
+
+  const findContact = () => {
+    return contacts.find(contact => contact.name === name);
+  };
+
+  const handleChange = e => {
     const { value } = e.currentTarget;
 
     switch (e.currentTarget.name) {
-      case "name":
+      case 'name':
         setName(value);
         break;
 
-      case "number":
+      case 'number':
         setNumber(value);
         break;
 
@@ -25,25 +40,25 @@ function ContactForm({ contacts, onSubmit }) {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = e => {
     e.preventDefault();
 
-    if (
-      contacts.find(
-        (contact) => contact.name.toLowerCase() === name.toLowerCase()
-      )
-    ) {
-      alert(name + " is already in contacts");
+    if (findContact()) {
+      toast.error(name + ' is already in contacts');
+      reset();
       return;
     }
 
-    onSubmit(name, number);
+    createContact(name);
+    toast.success(name + 'added successfully to address book', {
+      autoClose: 2000,
+    });
     reset();
   };
 
   const reset = () => {
-    setName("");
-    setNumber("");
+    setName('');
+    setNumber('');
   };
 
   return (
@@ -76,8 +91,9 @@ function ContactForm({ contacts, onSubmit }) {
           autoComplete="off"
         />
       </label>
-      <button type="submit" className={styles.button}>
+      <button type="submit" className={styles.button} disabled={isLoading}>
         Add contact
+        {isLoading && <LoadBox />}
       </button>
     </form>
   );
@@ -88,12 +104,4 @@ ContactForm.propTypes = {
   number: PropTypes.number,
 };
 
-const mapStateToProps = ({ items }) => ({
-  contacts: items,
-});
-
-const mapDispatchToProps = (dispatch) => ({
-  onSubmit: (name, number) => dispatch(actions.addContact(name, number)),
-});
-
-export default connect(mapStateToProps, mapDispatchToProps)(ContactForm);
+export default ContactForm;
